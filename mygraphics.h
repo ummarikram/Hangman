@@ -1,9 +1,11 @@
 #ifndef MYGRAPHICS_H_
 #define MYGRAPHICS_H_
 
+#pragma comment(lib, "winmm.lib")
 #include <windows.h>
-
-
+#include <iostream>
+#include <string>
+using namespace std;
 
 HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);     // Part of the Font Color Function.
 
@@ -24,7 +26,9 @@ void gotoxy(int x,int y); // sets console cursor on given x-y coordinates
 void showConsoleCursor(bool showFlag); // shows or hides the cursor
 void fontsize(int a, int b); // Font size adjustment
 void SetConsoleWindowDimensions(int a, int b); // Console window adjustment.
-
+void Maximize(); 
+void SetConsoleStyle(int x, int y);
+void SetINTRO();
 
 
 // function definitions
@@ -121,21 +125,17 @@ void delay(int ms)
 
 char getKey()
 {
-	HANDLE consoleHandle = GetStdHandle(STD_INPUT_HANDLE);
-	DWORD size = 1;
-	INPUT_RECORD input[1];
-	DWORD events = 0;
-	char key = '\0';
+	HANDLE handle = GetStdHandle(STD_INPUT_HANDLE);
+	DWORD events;
+	INPUT_RECORD buffer;
+	PeekConsoleInput(handle, &buffer, 1, &events);
 
-	if (PeekConsoleInput(consoleHandle,input,size,&events)){
-		if (input[0].EventType == KEY_EVENT){
-			key = input[0].Event.KeyEvent.uChar.AsciiChar;
-			FlushConsoleInputBuffer(consoleHandle);
-			return key;
-		}
+	if (events > 0)
+	{
+		ReadConsoleInput(handle, &buffer, 1, &events);
+		return buffer.Event.KeyEvent.wVirtualKeyCode;
 	}
-
-	return key; // returns NULL if no input event recorded
+	else return 0;
 }
 
 void getWindowDimensions(int& width, int& height)
@@ -200,5 +200,81 @@ void SetConsoleWindowDimensions(int a, int b)
 	MoveWindow(console, ConsoleRect.left, ConsoleRect.top, a, b, TRUE);            
 
 }
+
+void Maximize()
+{
+	HWND hWnd = GetConsoleWindow();
+	ShowWindow(hWnd, SW_SHOWMAXIMIZED);
+
+}
+
+void SetConsoleStyle(int x, int y)
+{
+	CONSOLE_FONT_INFOEX cf = { 0 };
+	cf.cbSize = sizeof cf;
+	cf.dwFontSize.X = x;
+	cf.dwFontSize.Y = y;
+	wcscpy_s(cf.FaceName, L"Consolas");
+	SetCurrentConsoleFontEx(GetStdHandle(STD_OUTPUT_HANDLE), 0, &cf);
+}
+
+void SetINTRO()
+{
+	showConsoleCursor(false);
+
+	SetConsoleWindowDimensions(1280, 720);
+
+	Maximize();
+
+	SetConsoleStyle(34, 70);
+
+	gotoxy(15, 5);
+
+	string hello = "A UI PRODUCTION!";
+
+	int len = hello.length();
+
+	PlaySound(TEXT("Wind2.wav"), NULL, SND_FILENAME | SND_ASYNC);
+
+	
+	for (int i = 0; i < len; i++)
+	{
+		putchar(hello[i]);
+
+		delay(500);
+	}
+
+	delay(4000);
+
+	system("cls");
+	
+	fontsize(13, 28);
+
+	SetConsoleWindowDimensions(1280, 720);
+
+	Maximize();
+
+	gotoxy(80, 20);
+
+	cout << "Loading";
+
+	int count = 0;
+
+	while (count < 3)
+	{
+		delay(500);
+		std::cout << "." << std::flush;
+		delay(500);
+		std::cout << "." << std::flush;
+		delay(500);
+		std::cout << "." << std::flush;
+		delay(500);
+		std::cout << "\b\b\b   \b\b\b" << std::flush;
+		count++;
+	}
+
+	system("cls");
+}
+
 
 #endif /* MYGRAPHICS_H_ */
